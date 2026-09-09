@@ -1,0 +1,35 @@
+{
+    "row_count": 2,
+    "data": [
+        {
+            "dates": "2024-04-01",
+            "ids": "0T7JQxpy1Li93vLNirbv0Z",
+            "names": "MAD SEASON",
+            "monthly_listeners": 568020,
+            "popularity": 49,
+            "followers": 598724,
+            "genres": ["alternative metal", "alternative rock", "blues rock", "grunge", "supergroup"],
+            "first_release": "1995",
+            "last_release": "1995",
+            "num_releases": 2,
+            "num_tracks": 26,
+            "playlists_found": "Grunge Forever",
+            "feat_track_ids": ["3e2fDgC93LGc9Lbdvr6I9k", "5DRUgJmwLvCHQjiFzb4LSQ"]
+        },
+        {
+            "dates": "2024-04-01",
+            "ids": "0TjAAwE04BeoSeOpJIakYH",
+            "names": "LITTLE MAY",
+            "monthly_listeners": 221557,
+            "popularity": 38,
+            "followers": 51747,
+            "genres": ["indie folk"],
+            "first_release": "2014",
+            "last_release": "2019",
+            "num_releases": 4,
+            "num_tracks": 5,
+            "playlists_found": "Sunrise Run",
+            "feat_track_ids": ["7L3WVfrpwUN07jkvZg1vrP"]
+        }
+    ]
+}
