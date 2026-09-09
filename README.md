@@ -60,9 +60,17 @@ Pastikan **Docker** dan **Docker Compose** telah beroperasi pada environment And
 ```bash
 docker compose down -v
 ```
-3. **Konfigurasi Environment**: Salin dan sesuaikan konfigurasi *environment*:
+3. **Konfigurasi Environment**: Salin `.env.example` menjadi `.env` dan sesuaikan nilainya:
 ```bash
 cp .env.example .env
+```
+Isi konfigurasi pada file `.env`:
+```env
+DB_HOST=db
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=EDTS_DE
 ```
 4. **Build dan Jalankan Eksekusi Utama (`main.py`)**: 
    Perintah ini akan membangun *image* dan **secara otomatis menjalankan skrip `main.py`** di dalam container:
@@ -96,12 +104,12 @@ Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `
 
 * **4. Bulk Insert to PostgreSQL (Clean Data)**:
   <p align="center">
-    <img src="img/img-readme/script_laod_pqsql_dataclean.png" alt="Script Load Postgresql Clean">
+    <img src="img/img-readme/script_load_pqsql_dataclean.png" alt="Script Load Postgresql Clean">
   </p>
 
 * **5. Bulk Insert to PostgreSQL (Reject Data)**:
   <p align="center">
-    <img src="img/img-readme/script_load_pqsql_datareject.png" alt="Script Load Postgresql Reject">
+    <img src="img/img-readme/script_laod_pqsql_datareject.png" alt="Script Load Postgresql Reject">
   </p>
 
 * **6. Exporting Clean Data to JSON & Reject to CSV**:
