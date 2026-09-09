@@ -91,7 +91,7 @@ Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `
 
 * **3. Database Preload Preparation**:
   <p align="center">
-    <img src="img/img-readme/script_exec_test_prepload.png" alt="Script Exec Preload">
+    <img src="img/img-readme/script_exec_test_preload.png" alt="Script Exec Preload">
   </p>
 
 * **4. Bulk Insert to PostgreSQL (Clean Data)**:
@@ -101,7 +101,7 @@ Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `
 
 * **5. Bulk Insert to PostgreSQL (Reject Data)**:
   <p align="center">
-    <img src="img/img-readme/script_load_pqsql_datareject.png" alt="Script Load Postgresql Reject">
+    <img src="img/img-readme/script_laod_pqsql_datareject.png" alt="Script Load Postgresql Reject">
   </p>
 
 * **6. Exporting Clean Data to JSON & Reject to CSV**:
@@ -119,7 +119,12 @@ Setelah *container* menyelesaikan pekerjaannya, pipeline akan memproduksi luaran
 - `data_reject_YYYYMMDDHHMMSS.csv`: Data duplikat (*rejected records*).
 
 **B. Integritas Database & Hasil Row Count**:
-Untuk memvalidasi bahwa data berhasil disimpan ke dalam PostgreSQL, berikut adalah tangkapan layar hasil pengecekan jumlah baris (*row count*) pada tabel `data` dan `data_reject`:
+Untuk memvalidasi integritas pipeline, jumlah baris pada data mentah (`scrap.csv`) harus sama persis dengan total data bersih (`data`) ditambah data duplikat (`data_reject`):
+
+* **Total Baris Data Mentah (`scrap.csv`)**:
+  <p align="center">
+    <img src="img/img-readme/count_rawdata_scrap.png" alt="Count Raw Data Scrap">
+  </p>
 
 * **Total Baris Data Bersih (`data`)**: 7,603 rows
   <p align="center">
@@ -131,6 +136,8 @@ Untuk memvalidasi bahwa data berhasil disimpan ke dalam PostgreSQL, berikut adal
     <img src="img/img-readme/result_count_dataReject.png" alt="Result Count Data Reject">
   </p>
 
+> **Rumus Validasi**: Total Data Mentah = Total Data Bersih (7.603) + Total Data Reject (26.353).
+
 ---
 
 ## 5. Unit Testing Execution & Documentation
@@ -140,6 +147,11 @@ Untuk menjalankan unit test di dalam container:
 ```bash
 docker compose run --rm app pytest tests/test_main.py -v
 ```
+
+*(Dokumentasi Eksekusi Pytest)*:
+<p align="center">
+  <img src="img/img-readme/test_main_pytest.png" alt="Pytest Execution Results">
+</p>
 
 Berikut adalah dokumentasi visual untuk setiap pengujian unit (*Unit Test Cases*):
 * **Test Read Data**:
@@ -159,7 +171,7 @@ Berikut adalah dokumentasi visual untuk setiap pengujian unit (*Unit Test Cases*
 
 * **Test Preload Preparation**:
   <p align="center">
-    <img src="img/img-readme/test_prepload.png" alt="Test Preload">
+    <img src="img/img-readme/test_preload.png" alt="Test Preload">
   </p>
 
 * **Test Database Insert (Clean)**:
