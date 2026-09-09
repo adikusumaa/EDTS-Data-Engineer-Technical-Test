@@ -91,7 +91,7 @@ Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `
 
 * **3. Database Preload Preparation**:
   <p align="center">
-    <img src="img/img-readme/script_exec_test_preload.png" alt="Script Exec Preload">
+    <img src="img/img-readme/script_exec_test_prepload.png" alt="Script Exec Preload">
   </p>
 
 * **4. Bulk Insert to PostgreSQL (Clean Data)**:
@@ -101,7 +101,7 @@ Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `
 
 * **5. Bulk Insert to PostgreSQL (Reject Data)**:
   <p align="center">
-    <img src="img/img-readme/script_laod_pqsql_datareject.png" alt="Script Load Postgresql Reject">
+    <img src="img/img-readme/script_load_pqsql_datareject.png" alt="Script Load Postgresql Reject">
   </p>
 
 * **6. Exporting Clean Data to JSON & Reject to CSV**:
@@ -171,7 +171,7 @@ Berikut adalah dokumentasi visual untuk setiap pengujian unit (*Unit Test Cases*
 
 * **Test Preload Preparation**:
   <p align="center">
-    <img src="img/img-readme/test_preload.png" alt="Test Preload">
+    <img src="img/img-readme/test_prepload.png" alt="Test Preload">
   </p>
 
 * **Test Database Insert (Clean)**:
