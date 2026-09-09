@@ -36,3 +36,25 @@ def split_duplicates(df):
     logger.info(f"[INFO] Total rows in rejected data: {len(df_reject_raw)}")
     return df_clean_raw, df_reject_raw
 
+def transform_data(df):
+    logger.info("[INFO] Transforming data")
+
+    df_trans = df.copy()
+    df_trans['dates']=pd.to_datetime(df_trans['dates'],format='%d/%m/%Y',errors='coerce').dt.strftime('%Y-%m-%d')
+    df_trans['names']=df_trans['names'].str.upper()
+
+    num_cols=['monthly_listeners', 'popularity', 'followers', 'num_releases', 'num_tracks']
+
+    for col in num_cols:
+        df_trans[col]=pd.to_numeric(df_trans[col],errors='coerce').fillna(0).astype(int)
+    df_trans['genres']=df_trans['genres'].apply(
+        lambda x: [genre.strip() for genre in str(x).split(',')]
+    )   
+    df_trans['feat_track_ids']=df_trans['feat_track_ids'].apply(
+        lambda x: [track.strip() for track in str(x).split(',')]
+    )
+    df_trans['first_release']=df_trans['first_release'].astype(str).str.strip()
+    df_trans['last_release']=df_trans['last_release'].astype(str).str.strip()
+
+    logger.debug(f"[DEBUG] Transformed DataFrame:\n{df_trans.head()}")
+    return df_trans

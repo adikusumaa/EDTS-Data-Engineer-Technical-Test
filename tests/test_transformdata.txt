@@ -1,0 +1,7 @@
+python -c "
+from main import read_csv, split_duplicates, transform_data
+df = read_csv('/app/example/scrap.csv')
+clean, _ = split_duplicates(df)
+transformed = transform_data(clean)
+print(transformed.iloc[0].to_dict())
+"
