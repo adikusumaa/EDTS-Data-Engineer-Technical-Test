@@ -70,7 +70,9 @@ cp .env.example .env
 docker compose up --build
 ```
    *(Visualisasi proses build container)*:
-   ![Docker Build Execution](img/img-readme/exec_docker_build.png)
+   <p align="center">
+     <img src="img/img-readme/exec_docker_build.png" alt="Docker Build Execution">
+   </p>
 
 ---
 
@@ -78,22 +80,34 @@ docker compose up --build
 Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `main.py` saat memproses data aktual dari folder `/source`:
 
 * **1. Splitting Data (Deduplikasi ID)**:
-  ![Script Exec Splitt](img/img-readme/script_exec_splitt.png)
+  <p align="center">
+    <img src="img/img-readme/script_exec_splitt.png" alt="Script Exec Splitt">
+  </p>
 
 * **2. Data Transformation (Standardisasi Skema)**:
-  ![Script Exec Transform](img/img-readme/script_exec_transform.png)
+  <p align="center">
+    <img src="img/img-readme/script_exec_transform.png" alt="Script Exec Transform">
+  </p>
 
 * **3. Database Preload Preparation**:
-  ![Script Exec Preload](img/img-readme/script_exec_test_preload.png)
+  <p align="center">
+    <img src="img/img-readme/script_exec_test_preload.png" alt="Script Exec Preload">
+  </p>
 
 * **4. Bulk Insert to PostgreSQL (Clean Data)**:
-  ![Script Load Postgresql Clean](img/img-readme/script_laod_pqsql_dataclean.png)
+  <p align="center">
+    <img src="img/img-readme/script_laod_pqsql_dataclean.png" alt="Script Load Postgresql Clean">
+  </p>
 
 * **5. Bulk Insert to PostgreSQL (Reject Data)**:
-  ![Script Load Postgresql Reject](img/img-readme/script_laod_pqsql_datareject.png)
+  <p align="center">
+    <img src="img/img-readme/script_laod_pqsql_datareject.png" alt="Script Load Postgresql Reject">
+  </p>
 
 * **6. Exporting Clean Data to JSON & Reject to CSV**:
-  ![Script Converting Data to JSON and CSV](img/img-readme/script_converting_data_to_json_and_csv.png)
+  <p align="center">
+    <img src="img/img-readme/script_converting_data_to_json_and_csv.png" alt="Script Converting Data to JSON and CSV">
+  </p>
 
 ---
 
@@ -108,10 +122,14 @@ Setelah *container* menyelesaikan pekerjaannya, pipeline akan memproduksi luaran
 Untuk memvalidasi bahwa data berhasil disimpan ke dalam PostgreSQL, berikut adalah tangkapan layar hasil pengecekan jumlah baris (*row count*) pada tabel `data` dan `data_reject`:
 
 * **Total Baris Data Bersih (`data`)**: 7,603 rows
-  ![Result Count Data Clean](img/img-readme/result_count_dataClean.png)
+  <p align="center">
+    <img src="img/img-readme/result_count_dataClean.png" alt="Result Count Data Clean">
+  </p>
 
 * **Total Baris Data Duplikat (`data_reject`)**: 26,353 rows
-  ![Result Count Data Reject](img/img-readme/result_count_dataReject.png)
+  <p align="center">
+    <img src="img/img-readme/result_count_dataReject.png" alt="Result Count Data Reject">
+  </p>
 
 ---
 
@@ -124,13 +142,40 @@ docker compose run --rm app pytest tests/test_main.py -v
 ```
 
 Berikut adalah dokumentasi visual untuk setiap pengujian unit (*Unit Test Cases*):
-* **Test Read Data**: ![Test Read Example Data](img/img-readme/test_read_example_data.png)
-* **Test Splitting Duplicates**: ![Test Splitting Data](img/img-readme/test_splitting_data.png)
-* **Test Data Transformation**: ![Test Transform](img/img-readme/test_transform.png)
-* **Test Preload Preparation**: ![Test Preload](img/img-readme/test_preload.png)
-* **Test Database Insert (Clean)**: ![Test Load Clean](img/img-readme/test_load_pqsql_dataclean.png)
-* **Test Database Insert (Reject)**: ![Test Load Reject](img/img-readme/test_load_pqsql_datareject.png)
-* **Test Export JSON & CSV**: ![Test Export](img/img-readme/test_converting_data_to_json_and_csv.png)
+* **Test Read Data**:
+  <p align="center">
+    <img src="img/img-readme/test_read_example_data.png" alt="Test Read Example Data">
+  </p>
+
+* **Test Splitting Duplicates**:
+  <p align="center">
+    <img src="img/img-readme/test_splitting_data.png" alt="Test Splitting Data">
+  </p>
+
+* **Test Data Transformation**:
+  <p align="center">
+    <img src="img/img-readme/test_transform.png" alt="Test Transform">
+  </p>
+
+* **Test Preload Preparation**:
+  <p align="center">
+    <img src="img/img-readme/test_preload.png" alt="Test Preload">
+  </p>
+
+* **Test Database Insert (Clean)**:
+  <p align="center">
+    <img src="img/img-readme/test_load_pqsql_dataclean.png" alt="Test Load Clean">
+  </p>
+
+* **Test Database Insert (Reject)**:
+  <p align="center">
+    <img src="img/img-readme/test_load_pqsql_datareject.png" alt="Test Load Reject">
+  </p>
+
+* **Test Export JSON & CSV**:
+  <p align="center">
+    <img src="img/img-readme/test_converting_data_to_json_and_csv.png" alt="Test Export">
+  </p>
 
 ---
 
