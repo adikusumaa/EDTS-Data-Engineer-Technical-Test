@@ -1,194 +1,104 @@
-# Data Engineering Test: CSV Cleansing with PostgreSQL
+# EDTS Data Engineer Technical Test - CSV Data Cleansing
 
-## Deskripsi
-Proyek ini merupakan solusi untuk tugas teknis Data Engineer yang berfokus pada pembersihan data CSV, deduplikasi, penyimpanan ke PostgreSQL, dan ekspor data bersih ke JSON serta data duplikat ke CSV. Aplikasi dibangun menggunakan Python, pandas, psycopg2, dan dijalankan dalam lingkungan Docker.
+## 1. Short Explanation About the Script
+Proyek ini merupakan solusi *data pipeline* untuk melakukan pembersihan data (*cleansing*), deduplikasi, dan pemuatan data dari format CSV mentah ke dalam *database* relasional. Pipeline ini dibangun menggunakan Python (dengan library `pandas` dan `psycopg2`) dan diorkestrasi dalam lingkungan Docker.
 
-## Fitur Utama
-- Membaca file CSV mentah dari direktori `/source`
-- Mendeteksi duplikat berdasarkan kolom `ids` (baris pertama dianggap data bersih, sisanya data reject)
-- Transformasi data:
-  - Konversi format tanggal menjadi `YYYY-MM-DD`
-  - Nama artis diubah menjadi huruf kapital
-  - Kolom numerik dikonversi menjadi integer
-  - Kolom `genres` dan `feat_track_ids` diubah menjadi list/array
-- Menyimpan data bersih ke tabel `data` dan data duplikat ke tabel `data_reject` di PostgreSQL
-- Mengekspor data bersih ke file JSON dengan format khusus
-- Mengekspor data duplikat ke file CSV dengan format sama seperti input
-- Logging profesional menggunakan modul `logging`
-- Unit test menggunakan `pytest`
+Berikut adalah penjelasan alur pemrosesan skrip `main.py` berdasarkan fungsi-fungsi utamanya:
 
-## Teknologi yang Digunakan
-| Komponen | Teknologi | Fungsi |
-|----------|-----------|--------|
-| Bahasa Pemrograman | Python 3.11 | Logika pemrosesan data |
-| Library Data | pandas | Manipulasi DataFrame |
-| Database Driver | psycopg2 | Koneksi dan insert ke PostgreSQL |
-| Database | PostgreSQL 16 | Penyimpanan data clean dan reject |
-| Containerization | Docker, Docker Compose | Isolasi lingkungan dan orkestrasi layanan |
-| Testing | pytest | Unit test untuk fungsi utama |
-
-## Struktur Direktori
-```text
-project/
-├── main.py # Script utama
-├── ddl.sql # DDL untuk tabel data dan data_reject
-├── requirements.txt # Dependensi Python
-├── Dockerfile # Definisi image Docker
-├── docker-compose.yaml # Orkestrasi layanan PostgreSQL dan aplikasi
-├── .env.example # Template environment variable
-├── .gitignore # File yang diabaikan Git
-├── README.md # Dokumentasi
-├── tests/
-│ └── test_main.py # Unit test
-├── source/
-│ └── scrap.csv # File input (mount volume)
-├── target/ # Folder output (mount volume)
-├── example/
-│ └── scrap.csv # File contoh untuk testing
-└── img/ # Folder screenshot
+```python
+read_csv(file_path)
 ```
+Melakukan ingesti data dari file CSV mentah ke dalam *pandas DataFrame*, dilengkapi dengan penanganan *exception* jika file sumber tidak ditemukan atau gagal dibaca.
 
-## Cara Menjalankan Proyek
+```python
+split_duplicates(df)
+```
+Melakukan deduplikasi *record* berdasarkan identifier kolom `ids`. Baris dengan kemunculan pertama diklasifikasikan sebagai data bersih (*clean*), sedangkan duplikasinya diisolasi menjadi data *reject*.
 
-### Prasyarat
-- Docker dan Docker Compose (v2.0+)
-- Python 3.10+ (untuk pengembangan lokal)
-- Git (opsional)
+```python
+transform_data(df)
+```
+Melakukan standardisasi skema data, meliputi:
+- *Parsing* kolom `dates` ke dalam format standar `YYYY-MM-DD`.
+- Transformasi string pada kolom `names` menjadi huruf kapital (*uppercase*).
+- *Type-casting* pada metrik numerik (`monthly_listeners`, `popularity`, `followers`, `num_releases`, `num_tracks`) menjadi tipe `integer`, serta mengonversi *null values* menjadi `0`.
+- Pembentukan *array/list* Python dari data string yang dipisahkan oleh koma untuk kolom `genres` dan `feat_track_ids`.
 
-### 1. Clone Repositori (jika ada)
+```python
+list_to_pg_array(lst)
+prep_df_db(df)
+```
+Memformat *array/list* dari Python agar kompatibel dengan sintaks DDL *array literal* PostgreSQL (contoh format target: `{"item1", "item2"}`), lalu mengaplikasikannya ke dalam *DataFrame* sebelum di-*insert*.
+
+```python
+get_db_connection()
+create_tables(conn)
+```
+Menginisiasi koneksi ke PostgreSQL menggunakan variabel *environment* dan secara otomatis mengeksekusi skrip `ddl.sql` untuk pembentukan tabel target (`data` dan `data_reject`) jika belum eksis di dalam database.
+
+```python
+insert_dataframe(conn, df, table_name)
+```
+Melakukan *bulk insert* ke tabel PostgreSQL `data` dan `data_reject` menggunakan fungsi `execute_values` dari `psycopg2.extras` untuk meminimalkan latensi I/O ke database.
+
+```python
+export_clean_to_json(df_clean_transformed, timestamp)
+export_reject_to_csv(df_reject_raw, timestamp)
+```
+Mengekspor luaran fisik dengan format penamaan berbasis *timestamp*:
+- Mengonversi *DataFrame* bersih menjadi *nested JSON* yang menyertakan informasi `row_count` dan *array* data aktual.
+- Mengekspor *DataFrame reject* kembali ke format CSV tanpa melakukan mutasi pada struktur kolom aslinya.
+
+## 2. How to Run the Script
+Pastikan **Docker** dan **Docker Compose** telah beroperasi pada environment Anda. Anda tidak perlu menginstal dependensi Python atau PostgreSQL secara manual.
+
+**Langkah Eksekusi:**
+1. Persiapkan data sumber: Letakkan file `scrap.csv` ke dalam direktori `./source/`.
+2. Salin dan sesuaikan konfigurasi *environment*:
 ```bash
-git clone <url-repositori>
-cd <nama-folder>
+cp .env.example .env
 ```
-
-### 2. Siapkan File Input
-Letakkan file scrap.csv di dalam folder source/. Pastikan format kolom sesuai dengan contoh pada soal.
-
-### 3. Konfigurasi Environment
-Salin .env.example menjadi .env dan sesuaikan nilainya:
-```env
-DB_HOST=db
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=EDTS_DE
-```
-
-### 4. Build dan Jalankan Aplikasi
+3. Bangun dan jalankan pipeline menggunakan Docker Compose:
 ```bash
 docker compose up --build
 ```
-Perintah ini akan:
-- Build image aplikasi dari Dockerfile
-- Menjalankan service PostgreSQL
-- Menjalankan script main.py sekali
-- Menyimpan output di folder target/
+Proses ini akan menginisialisasi service database PostgreSQL, menjalankan migrasi DDL, memproses data melalui script Python, dan menutup koneksi secara otomatis ketika operasi logikal selesai.
 
-### 5. Verifikasi Output
-Setelah proses selesai, cek folder target/:
-```bash
-ls -la target/
-```
-Akan muncul file JSON dan CSV dengan timestamp saat eksekusi.
+## 3. Expected Result and Validation
+Setelah *container* menyelesaikan pekerjaannya, pipeline akan memproduksi luaran berikut:
 
-## Cara Menjalankan Unit Test
-Untuk menjalankan unit test di dalam container:
-```bash
-docker compose run --rm app pytest tests/test_main.py -v
-```
-Hasil yang diharapkan: semua test lulus (7 passed).
+**A. File Fisik (di dalam direktori `./target/`)**:
+- `data_YYYYMMDDHHMMSS.json`: Data hasil pembersihan dan transformasi.
+- `data_reject_YYYYMMDDHHMMSS.csv`: Data duplikat (*rejected records*).
 
-## Format Output
-`data_YYYYMMDDHHMMSS.json`: berisi data bersih dengan struktur:
-```json
-{
-  "row_count": 2,
-  "data": [
-    {
-      "dates": "2024-04-01",
-      "ids": "string",
-      "names": "UPPERCASE",
-      "monthly_listeners": 568020,
-      "popularity": 49,
-      "followers": 598724,
-      "genres": ["alternative metal", "alternative rock"],
-      "first_release": "1995",
-      "last_release": "1995",
-      "num_releases": 2,
-      "num_tracks": 26,
-      "playlists_found": "Grunge Forever",
-      "feat_track_ids": ["3e2fDgC93LGc9Lbdvr6I9k", "5DRUgJmwLvCHQjiFzb4LSQ"]
-    }
-  ]
-}
-```
-
-`data_reject_YYYYMMDDHHMMSS.csv`: berisi data duplikat dengan format sama seperti scrap.csv.
-
-## Konfigurasi Database
-Tabel data dan data_reject dibuat otomatis oleh script melalui ddl.sql. Struktur kolom:
-
-| Kolom | Tipe Data |
-|---|---|
-| dates | DATE |
-| ids | VARCHAR |
-| names | VARCHAR |
-| monthly_listeners | INTEGER |
-| popularity | INTEGER |
-| followers | INTEGER |
-| genres | TEXT[] |
-| first_release | VARCHAR(4) |
-| last_release | VARCHAR(4) |
-| num_releases | INTEGER |
-| num_tracks | INTEGER |
-| playlists_found | VARCHAR |
-| feat_track_ids | TEXT[] |
-
-## Validasi Database
-Untuk memeriksa jumlah baris pada tabel:
-```bash
-docker compose exec db psql -U postgres -d EDTS_DE -c "SELECT COUNT(*) FROM data;"
-docker compose exec db psql -U postgres -d EDTS_DE -c "SELECT COUNT(*) FROM data_reject;"
-```
-
-## Catatan Penting
-- Gunakan perintah `docker compose down -v` untuk mereset database beserta volumenya.
-- Pastikan volume mount `./source` dan `./target` terpasang dengan benar.
-- Jika terjadi duplikasi data karena insert berulang, hapus isi tabel dengan `TRUNCATE data, data_reject;` sebelum menjalankan ulang.
-
-## Monitoring dan Debugging
-- Log aplikasi ditampilkan di terminal, dapat diakses dengan `docker compose logs app`.
-- Untuk debugging interaktif, masuk ke container:
-```bash
-docker compose run --rm app bash
-```
-- Untuk memeriksa isi database secara interaktif:
+**B. Integritas Database**:
+Untuk memvalidasi bahwa data berhasil disimpan ke dalam PostgreSQL, akses terminal *container* database:
 ```bash
 docker compose exec db psql -U postgres -d EDTS_DE
 ```
-Gunakan mode expanded display dengan perintah `\x` untuk tampilan lebih rapi.
+Jalankan kueri SQL berikut:
+```sql
+-- Memastikan data bersih tidak memiliki nilai ids ganda
+SELECT COUNT(*) FROM data;
 
-## Pengujian Per Fungsi
-Setiap fungsi pada main.py dapat diuji secara terpisah menggunakan Python shell di dalam container. Contoh pengujian fungsi read_csv:
-```bash
-docker compose run --rm app python -c "from main import read_csv; df = read_csv('/app/example/scrap.csv'); print(df.head())"
+-- Memastikan data duplikat tercatat untuk audit
+SELECT COUNT(*) FROM data_reject;
 ```
-Pengujian unit test lengkap menggunakan pytest seperti dijelaskan sebelumnya.
 
-## Improvement yang Mungkin Dilakukan
-- Menambahkan logging ke file untuk audit trail
-- Menambahkan retry logic untuk koneksi database
-- Menggunakan environment variable untuk path input/output
-- Menambahkan validasi data lebih lanjut (misal cek format tanggal)
-- Memisahkan kode menjadi modul terpisah (db.py, transform.py, dll) untuk maintainability
+**Unit Testing**:
+Pipeline ini dilengkapi pengujian yang dapat dieksekusi secara mandiri untuk memvalidasi fungsi pemisahan duplikat dan konversi *dataframe*:
+```bash
+docker compose run --rm app pytest tests/test_main.py -v
+```
 
-## Referensi
-- Dokumentasi pandas: https://pandas.pydata.org/docs/
-- Dokumentasi psycopg2: https://www.psycopg.org/docs/
-- Dokumentasi PostgreSQL: https://www.postgresql.org/docs/
-- Dokumentasi Docker: https://docs.docker.com/
+## 4. Possible Improvements Made
+Berikut adalah pengembangan sistem yang telah diterapkan pada *source code* untuk memastikan ketahanan pipeline:
+- **Professional Logging Mechanism**: Mengganti fungsi standar dengan modul `logging` terstruktur pada Python yang memiliki *severity level* (INFO, WARNING, ERROR, CRITICAL) serta fitur pelacakan `traceback.format_exc()`.
+- **Optimasi Pemuatan Data (Bulk Insert)**: Menggunakan iterasi data secara masal (bulk) alih-alih perulangan baris-demi-baris yang lambat saat melakukan *insert* data, meningkatkan performa eksekusi skrip secara signifikan.
+- **Transaction Safety**: Menerapkan manajemen *database connection* melalui blok `try-except-finally`, memastikan *connection pool* selalu ditutup secara aman meskipun skrip dihentikan oleh *fatal error*.
+- **Automasi Skema Skalabel**: DDL dieksekusi secara otomatis oleh skrip pada tahap awal menggunakan pembacaan statis `ddl.sql`, sehingga menghindari potensi *error* tabel tidak ditemukan (*table not found*) jika sistem di-*deploy* ulang melalui *scheduler* di kemudian hari.
 
-## Kontak
-- Author: [Nama Anda]
-- Email: [email@domain.com]
-- LinkedIn: [linkedin.com/in/username]
+---
+**Candidate Details**
+- **Name**: Nur Adiyanto Kusuma Nugraha
+- **Role**: Data Engineer
