@@ -104,12 +104,12 @@ Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `
 
 * **4. Bulk Insert to PostgreSQL (Clean Data)**:
   <p align="center">
-    <img src="img/img-readme/script_load_pqsql_dataclean.png" alt="Script Load Postgresql Clean">
+    <img src="img/img-readme/script_laod_pqsql_dataclean.png" alt="Script Load Postgresql Clean">
   </p>
 
 * **5. Bulk Insert to PostgreSQL (Reject Data)**:
   <p align="center">
-    <img src="img/img-readme/script_laod_pqsql_datareject.png" alt="Script Load Postgresql Reject">
+    <img src="img/img-readme/script_load_pqsql_datareject.png" alt="Script Load Postgresql Reject">
   </p>
 
 * **6. Exporting Clean Data to JSON & Reject to CSV**:
