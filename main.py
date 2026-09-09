@@ -4,6 +4,10 @@ import sys
 import traceback
 import pandas as pd
 
+import psycopg2
+from psycopg2 import sql
+from psycopg2.extras import execute_values
+
 logging.basicConfig(
     level=os.getenv('LOG_LEVEL', 'INFO').upper(),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -26,18 +30,18 @@ def read_csv(file_path):
         raise
 
 def split_duplicates(df):
-    logger.info("[INFO] Splitting duplicates")
+    logger.info("Splitting duplicates")
 
     duplicates_mask=df.duplicated(subset=['ids'], keep='first')
     df_clean_raw=df[~duplicates_mask].reset_index(drop=True)
     df_reject_raw=df[duplicates_mask].reset_index(drop=True)
 
-    logger.info(f"[INFO] Total rows in clean data: {len(df_clean_raw)}")
-    logger.info(f"[INFO] Total rows in rejected data: {len(df_reject_raw)}")
+    logger.info(f"Total rows in clean data: {len(df_clean_raw)}")
+    logger.info(f"Total rows in rejected data: {len(df_reject_raw)}")
     return df_clean_raw, df_reject_raw
 
 def transform_data(df):
-    logger.info("[INFO] Transforming data")
+    logger.info("Transforming data")
 
     df_trans = df.copy()
     df_trans['dates']=pd.to_datetime(df_trans['dates'],format='%d/%m/%Y',errors='coerce').dt.strftime('%Y-%m-%d')
@@ -56,5 +60,22 @@ def transform_data(df):
     df_trans['first_release']=df_trans['first_release'].astype(str).str.strip()
     df_trans['last_release']=df_trans['last_release'].astype(str).str.strip()
 
-    logger.debug(f"[DEBUG] Transformed DataFrame:\n{df_trans.head()}")
+    logger.debug(f"Transformed DataFrame:\n{df_trans.head()}")
     return df_trans
+
+def list_to_pg_array(lst):
+    if not lst:
+        return '{}'
+    escaped_items = [f'"{item}"' for item in lst]
+    return '{' + ','.join(escaped_items) + '}'
+
+def prep_df_db(df):
+    logger.info("Preparing DataFrame for database insertion")
+
+    df_db=df.copy()
+    df_db['genres']=df_db['genres'].apply(list_to_pg_array)
+    df_db['feat_track_ids']=df_db['feat_track_ids'].apply(list_to_pg_array)
+
+    logger.debug(f"Prepared DataFrame for DB:\n{df_db.head()}")
+    return df_db
+

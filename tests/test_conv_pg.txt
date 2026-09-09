@@ -1,0 +1,8 @@
+python -c "
+from main import read_csv, split_duplicates, transform_data, prep_df_db
+df = read_csv('/app/example/scrap.csv')
+clean, _ = split_duplicates(df)
+transformed = transform_data(clean)
+db_ready = prep_df_db(transformed)
+print(db_ready[['genres', 'feat_track_ids']].to_string())
+"
