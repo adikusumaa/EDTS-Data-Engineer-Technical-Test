@@ -1,0 +1,13 @@
+python -c "
+from main import read_csv, split_duplicates, transform_data, prep_df_db, get_db_connection, create_tables, insert_dataframe
+df = read_csv('/app/example/scrap.csv')
+clean, _ = split_duplicates(df)
+clean_trans = transform_data(clean)
+clean_db = prep_df_db(clean_trans)
+
+conn = get_db_connection()
+create_tables(conn)
+insert_dataframe(conn, clean_db, 'data')
+conn.close()
+print('Data clean inserted successfully')
+"

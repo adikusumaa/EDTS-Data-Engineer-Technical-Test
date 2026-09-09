@@ -79,3 +79,72 @@ def prep_df_db(df):
     logger.debug(f"Prepared DataFrame for DB:\n{df_db.head()}")
     return df_db
 
+def get_db_connection():
+    logger.info("Opening database connection")
+
+    try:
+        conn=psycopg2.connect(
+            host=os.getenv('DB_HOST', 'localhost'),
+            port=os.getenv('DB_PORT', '5432'),
+            user=os.getenv('DB_USER', 'postgres'),
+            password=os.getenv('DB_PASSWORD', 'postgres'),
+            dbname=os.getenv('DB_NAME', 'mydb')
+        )
+
+        logger.info("Database connection successful")
+        return conn
+    
+    except psycopg2.Error as e:
+        logger.error(f"Database connection failed: {e}")
+        logger.debug(traceback.format_exc())
+        raise
+
+def create_tables(conn):
+    ddl_path=os.path.join(os.path.dirname(__file__), 'ddl.sql')
+
+    logger.info(f"Executing DDL from {ddl_path}")
+
+    try:
+        with open(ddl_path, 'r') as f:
+            ddl_script = f.read()
+        with conn.cursor() as cur:
+            cur.execute(ddl_script)
+        conn.commit()
+
+        logger.info("Tables created or already exist")
+
+    except Exception as e:
+        logger.error(f"Failed to create tables: {e}")
+        logger.debug(traceback.format_exc())
+        raise
+
+def insert_dataframe(conn, df, table_name):
+    if df.empty:
+        logger.warning(f"DataFrame is empty, no data inserted into {table_name}")
+        return
+
+    columns = [
+        'dates', 'ids', 'names', 'monthly_listeners', 'popularity',
+        'followers', 'genres', 'first_release', 'last_release',
+        'num_releases', 'num_tracks', 'playlists_found', 'feat_track_ids'
+    ]
+    df_to_insert = df[columns]
+    records = [tuple(row) for row in df_to_insert.to_numpy()]
+    insert_query = sql.SQL("INSERT INTO {} ({}) VALUES %s").format(
+        sql.Identifier(table_name),
+        sql.SQL(', ').join(map(sql.Identifier, columns))
+    )
+
+    logger.info(f"Inserting {len(records)} rows into table {table_name}")
+
+    try:
+        with conn.cursor() as cur:
+            execute_values(cur, insert_query, records)
+        conn.commit()
+
+        logger.info(f"Successfully inserted {len(records)} rows into {table_name}")
+        
+    except Exception as e:
+        logger.error(f"Failed to insert into {table_name}: {e}")
+        logger.debug(traceback.format_exc())
+        raise
