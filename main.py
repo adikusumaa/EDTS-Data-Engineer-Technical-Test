@@ -24,3 +24,15 @@ def read_csv(file_path):
         logger.error(f"Failed to read CSV: {e}")
         logger.debug(traceback.format_exc())
         raise
+
+def split_duplicates(df):
+    logger.info("[INFO] Splitting duplicates")
+
+    duplicates_mask=df.duplicated(subset=['ids'], keep='first')
+    df_clean_raw=df[~duplicates_mask].reset_index(drop=True)
+    df_reject_raw=df[duplicates_mask].reset_index(drop=True)
+
+    logger.info(f"[INFO] Total rows in clean data: {len(df_clean_raw)}")
+    logger.info(f"[INFO] Total rows in rejected data: {len(df_reject_raw)}")
+    return df_clean_raw, df_reject_raw
+

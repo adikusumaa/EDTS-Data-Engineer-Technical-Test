@@ -1,0 +1,9 @@
+python -c "
+from main import read_csv, split_duplicates
+df = read_csv('/app/example/scrap.csv')
+clean, reject = split_duplicates(df)
+print('Clean rows:', len(clean))
+print('Reject rows:', len(reject))
+print('Clean ids:', clean['ids'].tolist())
+print('Reject ids:', reject['ids'].tolist())
+"
