@@ -49,12 +49,14 @@ Mengekspor luaran fisik dengan format penamaan berbasis *timestamp*:
 - Mengonversi *DataFrame* bersih menjadi *nested JSON* yang menyertakan informasi `row_count` dan *array* data aktual.
 - Mengekspor *DataFrame reject* kembali ke format CSV tanpa melakukan mutasi pada struktur kolom aslinya.
 
+---
+
 ## 2. How to Run the Script
 Pastikan **Docker** dan **Docker Compose** telah beroperasi pada environment Anda. Anda tidak perlu menginstal dependensi Python atau PostgreSQL secara manual.
 
 **Langkah Eksekusi:**
 1. **Persiapan Data Sumber (Aktual)**: Pastikan Anda menempatkan file data *assessment* asli `scrap.csv` ke dalam direktori `./source/` (bukan menggunakan data dari folder *example*).
-2. **Pembersihan Environment Sebelumnya (Opsional tapi Disarankan)**: Jika sebelumnya Anda pernah menjalankan data *example*, jalankan perintah berikut terlebih dahulu untuk menghapus volume database lama agar data tidak tercampur:
+2. **Pembersihan Environment Sebelumnya**: Jika sebelumnya Anda pernah menjalankan data *example*, bersihkan *database* terlebih dahulu agar data tidak tercampur:
 ```bash
 docker compose down -v
 ```
@@ -62,40 +64,77 @@ docker compose down -v
 ```bash
 cp .env.example .env
 ```
-4. **Bangun dan Jalankan Pipeline**: Eksekusi perintah berikut untuk membangun *image* dan menjalankan layanan:
+4. **Build dan Jalankan Eksekusi Utama (`main.py`)**: 
+   Perintah ini akan membangun *image* dan **secara otomatis menjalankan skrip `main.py`** di dalam container:
 ```bash
 docker compose up --build
 ```
-Proses ini akan menginisialisasi service database PostgreSQL, menjalankan migrasi DDL secara otomatis, memproses data aktual melalui skrip Python, dan menutup koneksi ketika operasi selesai.
+   *(Visualisasi proses build container)*:
+   ![Docker Build Execution](img/img-readme/exec_docker_build.png)
 
-## 3. Expected Result and Validation
-Setelah *container* menyelesaikan pekerjaannya, pipeline akan memproduksi luaran berikut:
+---
+
+## 3. Pipeline Execution Results (Main Script Logs)
+Berikut adalah dokumentasi visual hasil eksekusi dari fungsi-fungsi utama pada `main.py` saat memproses data aktual dari folder `/source`:
+
+* **1. Splitting Data (Deduplikasi ID)**:
+  ![Script Exec Splitt](img/img-readme/script_exec_splitt.png)
+
+* **2. Data Transformation (Standardisasi Skema)**:
+  ![Script Exec Transform](img/img-readme/script_exec_transform.png)
+
+* **3. Database Preload Preparation**:
+  ![Script Exec Preload](img/img-readme/script_exec_test_preload.png)
+
+* **4. Bulk Insert to PostgreSQL (Clean Data)**:
+  ![Script Load Postgresql Clean](img/img-readme/script_laod_pqsql_dataclean.png)
+
+* **5. Bulk Insert to PostgreSQL (Reject Data)**:
+  ![Script Load Postgresql Reject](img/img-readme/script_laod_pqsql_datareject.png)
+
+* **6. Exporting Clean Data to JSON & Reject to CSV**:
+  ![Script Converting Data to JSON and CSV](img/img-readme/script_converting_data_to_json_and_csv.png)
+
+---
+
+## 4. Expected Result and Validation
+Setelah *container* menyelesaikan pekerjaannya, pipeline akan memproduksi luaran fisik dan data terstruktur pada *database*.
 
 **A. File Fisik (di dalam direktori `./target/`)**:
 - `data_YYYYMMDDHHMMSS.json`: Data hasil pembersihan dan transformasi.
 - `data_reject_YYYYMMDDHHMMSS.csv`: Data duplikat (*rejected records*).
 
-**B. Integritas Database**:
-Untuk memvalidasi bahwa data berhasil disimpan ke dalam PostgreSQL, akses terminal *container* database:
-```bash
-docker compose exec db psql -U postgres -d EDTS_DE
-```
-Jalankan kueri SQL berikut untuk memastikan jumlah baris:
-```sql
--- Memastikan jumlah data bersih
-SELECT COUNT(*) FROM data;
+**B. Integritas Database & Hasil Row Count**:
+Untuk memvalidasi bahwa data berhasil disimpan ke dalam PostgreSQL, berikut adalah tangkapan layar hasil pengecekan jumlah baris (*row count*) pada tabel `data` dan `data_reject`:
 
--- Memastikan jumlah data duplikat (*reject*)
-SELECT COUNT(*) FROM data_reject;
-```
+* **Total Baris Data Bersih (`data`)**: 7,603 rows
+  ![Result Count Data Clean](img/img-readme/result_count_dataClean.png)
 
-**Unit Testing**:
-Pipeline ini dilengkapi pengujian yang dapat dieksekusi secara mandiri untuk memvalidasi fungsi pemisahan duplikat dan konversi *dataframe*:
+* **Total Baris Data Duplikat (`data_reject`)**: 26,353 rows
+  ![Result Count Data Reject](img/img-readme/result_count_dataReject.png)
+
+---
+
+## 5. Unit Testing Execution & Documentation
+Pipeline ini dilengkapi pengujian mandiri menggunakan `pytest` untuk memvalidasi fungsi-fungsi logikal secara terisolasi. 
+
+Untuk menjalankan unit test di dalam container:
 ```bash
 docker compose run --rm app pytest tests/test_main.py -v
 ```
 
-## 4. Possible Improvements Made
+Berikut adalah dokumentasi visual untuk setiap pengujian unit (*Unit Test Cases*):
+* **Test Read Data**: ![Test Read Example Data](img/img-readme/test_read_example_data.png)
+* **Test Splitting Duplicates**: ![Test Splitting Data](img/img-readme/test_splitting_data.png)
+* **Test Data Transformation**: ![Test Transform](img/img-readme/test_transform.png)
+* **Test Preload Preparation**: ![Test Preload](img/img-readme/test_preload.png)
+* **Test Database Insert (Clean)**: ![Test Load Clean](img/img-readme/test_load_pqsql_dataclean.png)
+* **Test Database Insert (Reject)**: ![Test Load Reject](img/img-readme/test_load_pqsql_datareject.png)
+* **Test Export JSON & CSV**: ![Test Export](img/img-readme/test_converting_data_to_json_and_csv.png)
+
+---
+
+## 6. Possible Improvements Made
 Berikut adalah pengembangan sistem yang telah diterapkan pada *source code* untuk memastikan ketahanan pipeline:
 - **Optimasi Pemuatan Data (Bulk Insert)**: Menggunakan iterasi data secara masal (*bulk*) melalui `execute_values` alih-alih perulangan baris-demi-baris yang lambat saat melakukan *insert*, meningkatkan performa eksekusi skrip secara signifikan.
 - **Transaction Safety**: Menerapkan manajemen *database connection* melalui blok `try-except-finally`, memastikan *connection pool* selalu ditutup secara aman meskipun skrip dihentikan oleh *fatal error*.
