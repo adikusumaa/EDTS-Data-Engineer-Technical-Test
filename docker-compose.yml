@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-mydb}
+      POSTGRES_DB: ${DB_NAME:-EDTS_DE}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +24,7 @@ services:
       DB_PORT: 5432
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_NAME: ${DB_NAME:-mydb}
+      DB_NAME: ${DB_NAME:-EDTS_DE}
       SOURCE_DIR: /source
       TARGET_DIR: /target
       LOG_LEVEL: INFO

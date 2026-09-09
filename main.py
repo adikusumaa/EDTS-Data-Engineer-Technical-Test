@@ -8,12 +8,19 @@ import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import execute_values
 
+import json
+from datetime import datetime
+
 logging.basicConfig(
     level=os.getenv('LOG_LEVEL', 'INFO').upper(),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     stream=sys.stdout
 )
 logger = logging.getLogger('csv_cleaner')
+
+SOURCE_DIR = os.getenv('SOURCE_DIR', '/source')
+TARGET_DIR = os.getenv('TARGET_DIR', '/target')
+SCRAP_FILE = os.path.join(SOURCE_DIR, 'scrap.csv')
 
 def read_csv(file_path):
     logger.info(f"Reading CSV file: {file_path}")
@@ -88,7 +95,7 @@ def get_db_connection():
             port=os.getenv('DB_PORT', '5432'),
             user=os.getenv('DB_USER', 'postgres'),
             password=os.getenv('DB_PASSWORD', 'postgres'),
-            dbname=os.getenv('DB_NAME', 'mydb')
+            dbname=os.getenv('DB_NAME', 'EDTS_DE')  
         )
 
         logger.info("Database connection successful")
@@ -148,3 +155,38 @@ def insert_dataframe(conn, df, table_name):
         logger.error(f"Failed to insert into {table_name}: {e}")
         logger.debug(traceback.format_exc())
         raise
+
+def export_clean_to_json(df_clean_transformed, timestamp):
+    df_export=df_clean_transformed.copy()
+    json_data={
+        "row_count":len(df_export),
+        "data":df_export.to_dict(orient='records')
+    }
+    output_path=os.path.join(TARGET_DIR, f'data_{timestamp}.json')
+    logger.info(f"Exporting clean data to JSON: {output_path}")
+
+    try:
+        with open(output_path, 'w') as f:
+            json.dump(json_data, f, indent=2)
+        logger.info(f"JSON exported successfully: {output_path}")
+        return output_path
+    
+    except Exception as e:
+        logger.error(f"Failed to export JSON: {e}")
+        logger.debug(traceback.format_exc())
+        raise
+
+def export_reject_to_csv(df_reject_raw, timestamp):
+    output_path = os.path.join(TARGET_DIR, f'data_reject_{timestamp}.csv')
+    logger.info(f"Exporting reject data to CSV: {output_path}")
+
+    try:
+        df_reject_raw.to_csv(output_path, index=False)
+        logger.info(f"CSV exported successfully: {output_path}")
+        return output_path
+    
+    except Exception as e:
+        logger.error(f"Failed to export CSV: {e}")
+        logger.debug(traceback.format_exc())
+        raise
+

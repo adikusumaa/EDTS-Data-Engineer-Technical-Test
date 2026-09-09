@@ -1,0 +1,9 @@
+python -c "
+from main import read_csv, split_duplicates, transform_data, export_clean_to_json, export_reject_to_csv
+df = read_csv('/app/example/scrap.csv')
+clean, reject = split_duplicates(df)
+clean_trans = transform_data(clean)
+export_clean_to_json(clean_trans, '20240302101010')
+export_reject_to_csv(reject, '20240302101010')
+print('Export done')
+"
