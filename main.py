@@ -190,3 +190,43 @@ def export_reject_to_csv(df_reject_raw, timestamp):
         logger.debug(traceback.format_exc())
         raise
 
+if __name__ == '__main__':
+    try:
+        logger.info("Starting CSV cleansing process")
+
+        df_raw=read_csv(SCRAP_FILE)
+        df_clean_raw,df_reject_raw=split_duplicates(df_raw)
+
+        df_clean_transformed=transform_data(df_clean_raw)
+        df_reject_transformed=transform_data(df_reject_raw)
+
+        conn=None
+        try:
+            conn=get_db_connection()
+            create_tables(conn)
+
+            df_clean_db=prep_df_db(df_clean_transformed)
+            df_reject_db=prep_df_db(df_reject_transformed)
+
+            insert_dataframe(conn,df_clean_db, 'data')
+            insert_dataframe(conn,df_reject_db, 'data_reject')
+
+        except Exception as e:
+            logger.error(f"Database process failed: {e}")
+            logger.debug(traceback.format_exc())
+            raise
+        finally:
+            if conn:
+                conn.close()
+                logger.info("Database connection closed")
+
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        export_clean_to_json(df_clean_transformed, timestamp)
+        export_reject_to_csv(df_reject_raw, timestamp)
+
+        logger.info("CSV cleansing process completed successfully")
+
+    except Exception:
+        logger.critical("Fatal error, application stopped")
+        logger.critical(traceback.format_exc())
+        sys.exit(1)
