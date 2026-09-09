@@ -53,16 +53,20 @@ Mengekspor luaran fisik dengan format penamaan berbasis *timestamp*:
 Pastikan **Docker** dan **Docker Compose** telah beroperasi pada environment Anda. Anda tidak perlu menginstal dependensi Python atau PostgreSQL secara manual.
 
 **Langkah Eksekusi:**
-1. Persiapkan data sumber: Letakkan file `scrap.csv` ke dalam direktori `./source/`.
-2. Salin dan sesuaikan konfigurasi *environment*:
+1. **Persiapan Data Sumber (Aktual)**: Pastikan Anda menempatkan file data *assessment* asli `scrap.csv` ke dalam direktori `./source/` (bukan menggunakan data dari folder *example*).
+2. **Pembersihan Environment Sebelumnya (Opsional tapi Disarankan)**: Jika sebelumnya Anda pernah menjalankan data *example*, jalankan perintah berikut terlebih dahulu untuk menghapus volume database lama agar data tidak tercampur:
+```bash
+docker compose down -v
+```
+3. **Konfigurasi Environment**: Salin dan sesuaikan konfigurasi *environment*:
 ```bash
 cp .env.example .env
 ```
-3. Bangun dan jalankan pipeline menggunakan Docker Compose:
+4. **Bangun dan Jalankan Pipeline**: Eksekusi perintah berikut untuk membangun *image* dan menjalankan layanan:
 ```bash
 docker compose up --build
 ```
-Proses ini akan menginisialisasi service database PostgreSQL, menjalankan migrasi DDL, memproses data melalui script Python, dan menutup koneksi secara otomatis ketika operasi logikal selesai.
+Proses ini akan menginisialisasi service database PostgreSQL, menjalankan migrasi DDL secara otomatis, memproses data aktual melalui skrip Python, dan menutup koneksi ketika operasi selesai.
 
 ## 3. Expected Result and Validation
 Setelah *container* menyelesaikan pekerjaannya, pipeline akan memproduksi luaran berikut:
@@ -76,12 +80,12 @@ Untuk memvalidasi bahwa data berhasil disimpan ke dalam PostgreSQL, akses termin
 ```bash
 docker compose exec db psql -U postgres -d EDTS_DE
 ```
-Jalankan kueri SQL berikut:
+Jalankan kueri SQL berikut untuk memastikan jumlah baris:
 ```sql
--- Memastikan data bersih tidak memiliki nilai ids ganda
+-- Memastikan jumlah data bersih
 SELECT COUNT(*) FROM data;
 
--- Memastikan data duplikat tercatat untuk audit
+-- Memastikan jumlah data duplikat (*reject*)
 SELECT COUNT(*) FROM data_reject;
 ```
 
@@ -93,8 +97,7 @@ docker compose run --rm app pytest tests/test_main.py -v
 
 ## 4. Possible Improvements Made
 Berikut adalah pengembangan sistem yang telah diterapkan pada *source code* untuk memastikan ketahanan pipeline:
-- **Professional Logging Mechanism**: Mengganti fungsi standar dengan modul `logging` terstruktur pada Python yang memiliki *severity level* (INFO, WARNING, ERROR, CRITICAL) serta fitur pelacakan `traceback.format_exc()`.
-- **Optimasi Pemuatan Data (Bulk Insert)**: Menggunakan iterasi data secara masal (bulk) alih-alih perulangan baris-demi-baris yang lambat saat melakukan *insert* data, meningkatkan performa eksekusi skrip secara signifikan.
+- **Optimasi Pemuatan Data (Bulk Insert)**: Menggunakan iterasi data secara masal (*bulk*) melalui `execute_values` alih-alih perulangan baris-demi-baris yang lambat saat melakukan *insert*, meningkatkan performa eksekusi skrip secara signifikan.
 - **Transaction Safety**: Menerapkan manajemen *database connection* melalui blok `try-except-finally`, memastikan *connection pool* selalu ditutup secara aman meskipun skrip dihentikan oleh *fatal error*.
 - **Automasi Skema Skalabel**: DDL dieksekusi secara otomatis oleh skrip pada tahap awal menggunakan pembacaan statis `ddl.sql`, sehingga menghindari potensi *error* tabel tidak ditemukan (*table not found*) jika sistem di-*deploy* ulang melalui *scheduler* di kemudian hari.
 
